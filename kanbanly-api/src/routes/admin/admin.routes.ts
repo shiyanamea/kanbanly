@@ -14,12 +14,12 @@ export class AdminRoutes extends BaseRoute {
   }
 
   protected initializeRoutes(): void {
-    // this._router.get(
-    //   "/users",
-    //   adminTokenCheck,
-    //   checkRole("admin"),
-    //   this._adminController.getAllUsers.bind(this._adminController)
-    // );
+    this._router.get(
+      "/users",
+      adminTokenCheck,
+      checkRole("admin"),
+      this._adminController.getAllUsers.bind(this._adminController)
+    );
 
     this._router.patch(
       "/users/:id/status",
