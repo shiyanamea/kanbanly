@@ -1,0 +1,166 @@
+/* app/globals.css */
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  :root {
+    --background: 0 0% 100%; /* Light background */
+    --foreground: 222.2 84% 4.9%; /* Dark text */
+
+    --card: 0 0% 100%;
+    --card-foreground: 222.2 84% 4.9%;
+
+    --popover: 0 0% 100%;
+    --popover-foreground: 222.2 84% 4.9%;
+
+    /* Primary color: Rich Purple */
+    --primary: 259 94% 66%;
+    --primary-foreground: 0 0% 100%; /* White text on primary */
+
+    --secondary: 210 40% 96.1%;
+    --secondary-foreground: 222.2 47.4% 11.2%;
+
+    --muted: 210 40% 96.1%;
+    --muted-foreground: 215.4 16.3% 46.9%;
+
+    /* Accent color: Vibrant Teal for CTAs */
+    --accent: 170 78% 44%;
+    --accent-foreground: 0 0% 100%; /* White text on accent */
+
+    --destructive: 0 84.2% 60.2%;
+    --destructive-foreground: 210 40% 98%;
+
+    --border: 214.3 31.8% 91.4%;
+    --input: 214.3 31.8% 91.4%;
+    --ring: 259 94% 66%; /* Primary color for rings */
+
+    --radius: 0.5rem;
+
+    /* Sidebar colors */
+    --sidebar-background: 0 0% 98%;
+    --sidebar-foreground: 240 5.3% 26.1%;
+    --sidebar-primary: 240 5.9% 10%;
+    --sidebar-primary-foreground: 0 0% 98%;
+    --sidebar-accent: 240 4.8% 95.9%;
+    --sidebar-accent-foreground: 240 5.9% 10%;
+    --sidebar-border: 220 13% 91%;
+    --sidebar-ring: 217.2 91.2% 59.8%;
+
+    /* Gradient Stop Colors (Light Mode) */
+    --color-bg-gradient-from-light: 220 100% 97%; /* Blue 50 equivalent */
+    --color-bg-gradient-via-light: 0 0% 100%;    /* White equivalent */
+    --color-bg-gradient-to-light: 270 100% 98%;   /* Purple 50 equivalent */
+
+    /* Text Colors (Light Mode) */
+    --color-text-default-light: 222.2 84% 4.9%; /* Gray 900 equivalent */
+    --color-text-secondary-light: 215.4 16.3% 46.9%; /* Gray 600 equivalent */
+    --color-text-tertiary-light: 215 20.2% 65.1%; /* Gray 500 equivalent */
+
+    /* Card/Element Backgrounds (Light Mode) */
+    --color-card-bg-light: 0 0% 100%; /* White */
+    --color-card-border-light: 214.3 31.8% 91.4%; /* Gray 200 equivalent */
+
+    /* Button Colors (Light Mode) */
+    --color-button-border-light: 214.3 31.8% 91.4%; /* Gray 300 equivalent */
+    --color-button-text-light: 215.4 16.3% 46.9%; /* Gray 600 equivalent */
+  }
+
+  .dark {
+    --background: 222.2 84% 4.9%;
+    --foreground: 210 40% 98%;
+
+    --card: 222.2 84% 4.9%;
+    --card-foreground: 210 40% 98%;
+
+    --popover: 222.2 84% 4.9%;
+    --popover-foreground: 210 40% 98%;
+
+    /* Primary color: Rich Purple (Dark Mode) */
+    --primary: 259 80% 70%; /* Slightly lighter for dark mode */
+    --primary-foreground: 0 0% 100%;
+
+    --secondary: 217.2 32.6% 17.5%;
+    --secondary-foreground: 210 40% 98%;
+
+    --muted: 217.2 32.6% 17.5%;
+    --muted-foreground: 215 20.2% 65.1%;
+
+    /* Accent color: Vibrant Teal for CTAs (Dark Mode) */
+    --accent: 170 70% 50%; /* Slightly adjusted for dark mode */
+    --accent-foreground: 0 0% 100%;
+
+    --destructive: 0 62.8% 30.6%;
+    --destructive-foreground: 210 40% 98%;
+
+    --border: 217.2 32.6% 17.5%;
+    --input: 209 36% 18%;
+    --ring: 259 80% 70%; /* Primary color for rings (Dark Mode) */
+    
+     /* Gradient Stop Colors (Dark Mode) */
+    --color-bg-gradient-from-dark: 222.2 84% 4.9%; /* Gray 900 equivalent */
+    --color-bg-gradient-via-dark: 217.2 32.6% 17.5%; /* Gray 800 equivalent */
+    --color-bg-gradient-to-dark: 222.2 84% 4.9%;   /* Gray 900 equivalent */
+
+    /* Text Colors (Dark Mode) */
+    --color-text-default-dark: 210 40% 98%; /* White equivalent */
+    --color-text-secondary-dark: 215 20.2% 65.1%; /* Gray 300 equivalent */
+    --color-text-tertiary-dark: 215.4 16.3% 46.9%; /* Gray 400 equivalent */
+
+    /* Card/Element Backgrounds (Dark Mode) */
+    --color-card-bg-dark: 222.2 84% 4.9%; /* Gray 800 */
+    --color-card-border-dark: 217.2 32.6% 17.5%; /* Gray 700 equivalent */
+
+    /* Button Colors (Dark Mode) */
+    --color-button-border-dark: 217.2 32.6% 17.5%; /* Gray 600 equivalent */
+    --color-button-text-dark: 215 20.2% 65.1%; /* Gray 300 equivalent */
+  }
+}
+
+/* #root {
+  max-width: 1280px;
+  margin: 0 auto;
+  padding: 2rem;
+  text-align: center;
+} */
+
+@layer base {
+  * {
+    @apply border-border;
+  }
+
+  body {
+    @apply bg-background text-foreground;
+  }
+
+  html {
+    scroll-behavior: smooth;
+  }
+}
+
+@layer utilities {
+  .gradient-bg {
+    background-image: linear-gradient(135deg, hsl(var(--primary) / 0.9) 0%, hsl(var(--accent) / 0.8) 100%);
+  }
+  .gradient-text {
+    @apply bg-clip-text text-transparent bg-gradient-to-r from-primary to-accent;
+  }
+}
+
+@keyframes bell-ring {
+  0%   { transform: rotate(0deg); }
+  25%  { transform: rotate(15deg); }
+  50%  { transform: rotate(-15deg); }
+  75%  { transform: rotate(10deg); }
+  100% { transform: rotate(0deg); }
+}
+
+.bell-ring {
+  animation: bell-ring 1.2s ease-in-out;
+  transform-origin: top center;
+}
+
+.group:hover .bell-icon {
+  animation: bell-ring 1s ease-in-out;
+  transform-origin: top center;
+}
