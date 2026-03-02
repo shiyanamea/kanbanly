@@ -62,11 +62,11 @@ function WorkspaceLayout({ children }: { children: ReactNode }) {
 
   return (
     <div className="min-h-screen w-full bg-background text-foreground transition-colors duration-300">
-      {/* <UserSidebar />
+      <UserSidebar />
       <SidebarInset>
         <Header />
         <div className={`pt-[75px] ${sidebarPadding}`}>{children}</div>
-      </SidebarInset> */}
+      </SidebarInset>
     </div>
   );
 }
