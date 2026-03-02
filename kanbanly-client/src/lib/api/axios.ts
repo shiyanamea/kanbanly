@@ -11,7 +11,6 @@ interface ToastMethods {
     title: string;
     description?: string;
     duration: number;
-    actions?: any[];
   }) => string;
 }
 
@@ -27,7 +26,20 @@ api.interceptors.response.use(
   async (error) => {
     const originalRequest = error.config;
 
-    if (error.response?.status === 403) {
+    if (!error.response) {
+      toastInstance?.showWarning({
+        title: "Server is unreachable",
+        description: "Please check your connection or try again later.",
+        duration: 5000,
+      });
+      return Promise.reject(error);
+    }
+
+    if (originalRequest?.url?.includes("/refresh")) {
+      return Promise.reject(error);
+    }
+
+    if (error.response?.status === 401) {
       if (!isRefreshing) {
         isRefreshing = true;
         try {
@@ -36,6 +48,7 @@ api.interceptors.response.use(
 
           return api(originalRequest);
         } catch (error) {
+          console.log(error);
           isRefreshing = false;
           localStorage.removeItem("isAuthenticated");
           toastInstance?.showWarning({
@@ -46,6 +59,15 @@ api.interceptors.response.use(
           window.location.href = "/login";
         }
       }
+    }
+
+    if (error.response?.status === 500) {
+      toastInstance?.showWarning({
+        title: "Something went wrong",
+        description:
+          "We’re having trouble on our side. Please try again later.",
+        duration: 5000,
+      });
     }
 
     return Promise.reject(error);

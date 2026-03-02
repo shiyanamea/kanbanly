@@ -21,5 +21,19 @@ export class InvitationRoutes extends BaseRoute {
         this._invitationController
       )
     );
+    this._router.get(
+      "/workspace/:workspaceId",
+      authenticateToken,
+      this._invitationController.getAllInvitations.bind(
+        this._invitationController
+      )
+    );
+    this._router.delete(
+      "/workspace/:workspaceId/:email",
+      authenticateToken,
+      this._invitationController.removeInvitation.bind(
+        this._invitationController
+      )
+    );
   }
 }

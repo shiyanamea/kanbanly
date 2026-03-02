@@ -7,6 +7,7 @@ import { IVerificationService } from "../types/service-interface/IVerificationSe
 import { ITokenService } from "../types/service-interface/ITokenService";
 import { setAuthCookies } from "../shared/utils/cookieHelper.utils";
 import { SUCCESS_MESSAGES } from "../shared/constants/messages";
+import { config } from "../config";
 
 @injectable()
 export class VerificationController implements IVerificationController {
@@ -29,33 +30,34 @@ export class VerificationController implements IVerificationController {
     const accessToken = this._tokenService.generateAccessToken({
       userid: user.userId as string,
       email: user.email,
-      role: user.isAdmin ? "Admin" : "User",
+      role: user.isAdmin ? "admin" : "user",
     });
 
     const refreshToken = this._tokenService.generateRefreshToken({
       userid: user.userId as string,
       email: user.email,
-      role: user.isAdmin ? "Admin" : "User",
+      role: user.isAdmin ? "admin" : "user",
     });
 
-    setAuthCookies(res, "accessToken", accessToken, 60 * 60 * 1000);
+    setAuthCookies(
+      res,
+      "accessToken",
+      accessToken,
+      config.cookies.ACCESS_COOKIE_MAXAGE as number
+    );
     setAuthCookies(
       res,
       "refreshToken",
       refreshToken,
-      7 * 24 * 60 * 60 * 1000
+      config.cookies.REFRESH_COOKIE_MAXAGE as number
     );
 
     res.status(HTTP_STATUS.OK).json({
       success: true,
       message: SUCCESS_MESSAGES.EMAIL_VERIFIED,
       data: {
-        user: {
-          firstName: user.firstName,
-          lastName: user.lastName,
-          email: user.email,
-        },
-        role:user.isAdmin ? "admin":'user'
+        user,
+        role: user.isAdmin ? "admin" : "user",
       },
     });
   }

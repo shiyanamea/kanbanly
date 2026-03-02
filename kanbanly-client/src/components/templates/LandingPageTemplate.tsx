@@ -1,4 +1,4 @@
-"use client"
+"use client";
 import FeaturesSection from "../organisms/landing-page/Features";
 import Footer from "../organisms/landing-page/Footer";
 import HeroSection from "../organisms/landing-page/HeroSection";
@@ -13,7 +13,11 @@ const LandingPageTemplate = () => {
       <main className="flex-grow">
         <HeroSection />
         <FeaturesSection />
-        <PricingSection />
+        <PricingSection
+          buttonLabel="Get Started"
+          isLoading={false}
+          onPlanSelection={() => {}}
+        />
       </main>
       <Footer />
     </div>

@@ -1,13 +1,60 @@
-import { CreateTaskDto } from "../dtos/task/task.dto";
-import { ITask } from "../entities/ITask";
+import {
+  CreateTaskDto,
+  EditTaskDto,
+  SubTaskListingDto,
+  TaskDetailsDto,
+  TaskFilters,
+  TaskListingDto,
+  TaskStatus,
+  WorkItemType,
+} from "../dtos/task/task.dto";
 
 export interface ITaskService {
   createTask(data: CreateTaskDto): Promise<void>;
   getAllTask(
     workspaceId: string,
     projectId: string,
+    userId: string,
+    filters: TaskFilters
+  ): Promise<TaskListingDto[]>;
+  getOneTask(
+    workspaceId: string,
+    projectId: string,
+    userId: string,
+    taskId: string
+  ): Promise<TaskDetailsDto>;
+  getAllSubTasks(
+    workspaceId: string,
+    projectId: string,
+    userId: string,
+    taskId: string
+  ): Promise<SubTaskListingDto[]>;
+  changeTaskStatus(
+    taskId: string,
+    userId: string,
+    newStatus: TaskStatus
+  ): Promise<void>;
+  editTask(
+    workspaceId: string,
+    projectId: string,
+    taskId: string,
+    userId: string,
+    data: EditTaskDto
+  ): Promise<void>;
+  attachParentItem(
+    parentType: WorkItemType,
+    parentId: string,
+    taskId: string,
+    workspaceId: string,
     userId: string
-  ): Promise<ITask[]>;
+  ): Promise<void>;
+  attachSprint(
+    userId: string,
+    taskId: string,
+    sprintId: string,
+    workspaceId: string,
+    projectId: string
+  ): Promise<void>;
   removeTask(
     workspaceId: string,
     taskId: string,

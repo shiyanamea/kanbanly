@@ -5,9 +5,10 @@ import { Button } from "@/components/atoms/button";
 import { Card, CardContent } from "@/components/atoms/card";
 import { Input } from "@/components/atoms/input";
 import { Textarea } from "@/components/atoms/textarea";
-import { workspaceIcons } from "@/constants/icons";
+import { workspaceIcons } from "@/lib/constants/icons";
 import {
   IWorkspace,
+  IWorkspacePermissions,
   WorkspaceEditPayload,
 } from "@/lib/api/workspace/workspace.types";
 import { useSelector } from "react-redux";
@@ -15,22 +16,33 @@ import { RootState } from "@/store";
 import { ConfirmationModal } from "@/components/organisms/admin/ConfirmationModal";
 import { getDate } from "@/lib/utils";
 
+import { RolePermissions } from "@/components/organisms/workspace/RolePermissions";
+import { workspaceRoles } from "@/types/roles.enum";
+
 interface WorkspaceManageTemplateProps {
   workspaceData: Omit<IWorkspace, "workspaceId" | "slug" | "createdBy">;
   handleDelete: () => void;
   uploadEdited: (data: WorkspaceEditPayload) => void;
+  handleRolePermissionUpdation: (
+    role: workspaceRoles,
+    permissionId: keyof IWorkspacePermissions,
+    checked: boolean
+  ) => void;
 }
 
 export function WorkspaceManageTemplate({
   workspaceData,
   handleDelete,
   uploadEdited,
+  handleRolePermissionUpdation,
 }: WorkspaceManageTemplateProps) {
   const [isEditing, setIsEditing] = useState(false);
   const [editData, setEditData] = useState<WorkspaceEditPayload | null>(null);
   const [isModalOpen, setIsModalOpen] = useState(false);
 
-  const role = useSelector((state: RootState) => state.workspace.memberRole);
+  const { memberRole: role, permissions } = useSelector(
+    (state: RootState) => state.workspace
+  );
 
   const handleSave = () => {
     if (!editData) {
@@ -41,20 +53,16 @@ export function WorkspaceManageTemplate({
   };
 
   const handleEdit = () => {
-    // setEditData(workspaceData);
     setIsEditing(true);
   };
 
   const handleCancel = () => {
-    // setEditData(workspaceData);
     setIsEditing(false);
   };
 
   const handleIconChange = (iconName: string) => {
     setEditData({ ...editData, logo: iconName });
   };
-
-  console.log("editData state", editData);
 
   const getCurrentIcon = () => {
     const currentIconName = isEditing ? editData?.logo : workspaceData.logo;
@@ -66,7 +74,7 @@ export function WorkspaceManageTemplate({
 
   return (
     <main className="flex-1 p-8">
-      <div className="max-w-4xl mx-auto">
+      <div className="max-w-4xl mx-auto space-y-2">
         {/* Header */}
         <div className="flex items-center justify-between mb-8">
           <div>
@@ -78,8 +86,8 @@ export function WorkspaceManageTemplate({
             </p>
           </div>
 
-          {!isEditing && role === "owner" && (
-            <div className="flex gap-5">
+          <div className="flex gap-5">
+            {!isEditing && role === "owner" && (
               <Button
                 onClick={() => setIsModalOpen(true)}
                 className="bg-red-500/80 hover:bg-red-500"
@@ -87,6 +95,8 @@ export function WorkspaceManageTemplate({
                 <Trash className="w-4 h-4 mr-2" />
                 Delete Workspace
               </Button>
+            )}
+            {permissions?.workspaceEdit && (
               <Button
                 onClick={handleEdit}
                 className="bg-primary hover:bg-primary/90"
@@ -94,8 +104,8 @@ export function WorkspaceManageTemplate({
                 <Edit3 className="w-4 h-4 mr-2" />
                 Edit Details
               </Button>
-            </div>
-          )}
+            )}
+          </div>
         </div>
 
         {/* Workspace Card */}
@@ -179,7 +189,11 @@ export function WorkspaceManageTemplate({
                         Description
                       </label>
                       <Textarea
-                        value={ editData?.description ? editData.description : workspaceData.description}
+                        value={
+                          editData?.description
+                            ? editData.description
+                            : workspaceData.description
+                        }
                         onChange={(e) =>
                           setEditData({
                             ...editData,
@@ -251,6 +265,14 @@ export function WorkspaceManageTemplate({
             </div>
           </CardContent>
         </Card>
+
+        {/* Role Permissions Section */}
+        {role === "owner" && (
+          <RolePermissions
+            rolePermissions={workspaceData.permissions}
+            handleRolePermissionUpdation={handleRolePermissionUpdation}
+          />
+        )}
       </div>
       <ConfirmationModal
         isOpen={isModalOpen}

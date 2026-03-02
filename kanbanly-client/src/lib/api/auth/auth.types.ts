@@ -18,6 +18,7 @@ export interface SignupPayload {
   phone?: string;
   password: string;
   confirmPass?: string;
+  profile?: string;
 }
 
 export interface LoginPayload {
@@ -26,9 +27,11 @@ export interface LoginPayload {
 }
 
 export interface LoginResponseData {
+  userId: string;
   firstName: string;
   lastName: string;
   email: string;
+  profile?: string;
   role: string;
   isEmailVerified: boolean;
 }

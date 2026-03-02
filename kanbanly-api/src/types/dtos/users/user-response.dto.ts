@@ -15,6 +15,7 @@ export interface EditUserDto {
   userId: string;
   firstName?: string;
   lastName?: string;
+  profile?: string;
 }
 
 export interface EditUserPasswordDto {
@@ -25,5 +26,14 @@ export interface EditUserPasswordDto {
 
 export type UserDataResponseDto = Pick<
   UserResponseDto,
-  "firstName" | "lastName" | "email" | "createdAt"
+  "firstName" | "lastName" | "email" | "createdAt" | "profile"
 > & { isGoogleLogin: boolean };
+
+export interface ProcessVerificationResponseDto {
+  userId: string;
+  firstName: string;
+  lastName?: string;
+  email: string;
+  profile?: string;
+  isAdmin: boolean;
+}

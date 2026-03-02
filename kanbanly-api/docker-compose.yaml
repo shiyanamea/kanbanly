@@ -1,0 +1,27 @@
+services:
+  express-dev:
+    build:
+      context: .
+      target: development
+    ports:
+      - "5000:5000"
+    env_file:
+      - .env
+    volumes:
+      - .:/app
+      - /app/node_modules
+    command: npm run dev
+    profiles: ["dev"]
+
+  express-prod:
+    container_name: kanbanly-api
+    build:
+      context: .
+      target: production
+    ports:
+      - "5000:5000"
+    env_file:
+      - .env
+    environment:
+      NODE_ENV: production
+    profiles: ["prod"]

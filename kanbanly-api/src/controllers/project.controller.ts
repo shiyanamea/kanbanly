@@ -13,7 +13,7 @@ export class ProjectController implements IProjectController {
   ) {}
 
   async createProject(req: Request, res: Response): Promise<void> {
-    const { name, description } = req.body;
+    const { name, key, description, template } = req.body;
     const workspaceId = req.params.workspaceId;
     const userId = req.user?.userid;
 
@@ -26,7 +26,9 @@ export class ProjectController implements IProjectController {
 
     await this._projectService.addProject({
       name,
+      key,
       description,
+      template,
       workspaceId,
       createdBy: userId,
     });
@@ -40,6 +42,8 @@ export class ProjectController implements IProjectController {
     const workspaceId = req.params.workspaceId;
     const userId = req.user?.userid;
 
+    const { search, memberFilter, sortBy, order, limit, skip } = req.query;
+
     if (!userId) {
       throw new AppError(
         ERROR_MESSAGES.UNAUTHORIZED_ACCESS,
@@ -47,9 +51,23 @@ export class ProjectController implements IProjectController {
       );
     }
 
+    const filters = {
+      search: search as string | undefined,
+      memberFilter: memberFilter as string | undefined,
+    };
+
+    const sorting = {
+      sortBy: sortBy as string | undefined,
+      order: order as string | undefined,
+    };
+
     const projects = await this._projectService.getAllProjects(
       workspaceId,
-      userId
+      userId,
+      filters,
+      sorting,
+      Number(limit),
+      Number(skip)
     );
 
     res.status(HTTP_STATUS.OK).json({
@@ -149,6 +167,58 @@ export class ProjectController implements IProjectController {
     res.status(HTTP_STATUS.OK).json({
       success: true,
       message: SUCCESS_MESSAGES.MEMBER_ADDED,
+    });
+  }
+
+  async getMembers(req: Request, res: Response): Promise<void> {
+    const projectId = req.params.projectId;
+    const workspaceId = req.params.workspaceId;
+    const userId = req.user?.userid;
+    const search = req.query.search as string;
+
+    if (!userId) {
+      throw new AppError(
+        ERROR_MESSAGES.UNAUTHORIZED_ACCESS,
+        HTTP_STATUS.UNAUTHORIZED
+      );
+    }
+
+    const members = await this._projectService.getMembers(
+      workspaceId,
+      userId,
+      projectId,
+      search
+    );
+
+    res.status(HTTP_STATUS.OK).json({
+      success: true,
+      message: SUCCESS_MESSAGES.DATA_FETCHED,
+      data: members,
+    });
+  }
+
+  async removeMember(req: Request, res: Response): Promise<void> {
+    const projectId = req.params.projectId;
+    const workspaceId = req.params.workspaceId;
+    const memberId = req.params.memberId;
+    const userId = req.user?.userid;
+    if (!userId) {
+      throw new AppError(
+        ERROR_MESSAGES.UNAUTHORIZED_ACCESS,
+        HTTP_STATUS.UNAUTHORIZED
+      );
+    }
+
+    await this._projectService.removeMember(
+      workspaceId,
+      projectId,
+      userId,
+      memberId
+    );
+
+    res.status(HTTP_STATUS.OK).json({
+      success: true,
+      message: SUCCESS_MESSAGES.MEMBER_REMOVED,
     });
   }
 }

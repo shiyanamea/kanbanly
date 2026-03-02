@@ -61,7 +61,6 @@ export const ToastProvider: React.FC<ToastProviderProps> = ({ children }) => {
 
   // Function to clear and set a new timer for a toast
   const manageToastTimer = useCallback((toastId: string, duration: number) => {
-    // Clear any existing timer for this toast
     if (toastTimers.current[toastId]) {
       clearTimeout(toastTimers.current[toastId] as NodeJS.Timeout);
     }
@@ -183,10 +182,11 @@ export const ToastProvider: React.FC<ToastProviderProps> = ({ children }) => {
 
   // Cleanup timers on unmount
   useEffect(() => {
+    const timers = toastTimers.current;
     return () => {
-      for (const id in toastTimers.current) {
-        if (toastTimers.current[id]) {
-          clearTimeout(toastTimers.current[id] as NodeJS.Timeout);
+      for (const id in timers) {
+        if (timers[id]) {
+          clearTimeout(timers[id] as NodeJS.Timeout);
         }
       }
     };

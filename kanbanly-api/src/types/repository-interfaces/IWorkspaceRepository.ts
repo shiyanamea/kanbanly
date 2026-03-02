@@ -1,4 +1,4 @@
-import { IWorkspace } from "../entities/IWrokspace";
+import { IWorkspace } from "../entities/IWorkspace";
 import { IBaseRepository } from "./IBaseRepositroy";
 
 export interface IWorkspaceRepository extends IBaseRepository<IWorkspace> {
@@ -8,4 +8,10 @@ export interface IWorkspaceRepository extends IBaseRepository<IWorkspace> {
     userId: string
   ): Promise<IWorkspace[]>;
   isOwner(workspaceId: string, userId: string): Promise<boolean>;
+  findWorkspacesWithOwner(options: {
+    limit?: number;
+    skip?: number;
+    search?: string;
+  }): Promise<IWorkspace[]>;
+  countWorkspaces(): Promise<number>;
 }

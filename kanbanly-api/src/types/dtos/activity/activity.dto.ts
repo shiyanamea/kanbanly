@@ -1,0 +1,27 @@
+import { IActivity } from "../../entities/IActivity";
+import {
+  ActivityTypeEnum,
+  TaskActivityActionEnum,
+} from "../../enums/activity.enum";
+
+export interface CreateActivityDto {
+  workspaceId: string;
+  projectId?: string;
+  taskId?: string;
+  entityId: string;
+  entityType: ActivityTypeEnum;
+  action: TaskActivityActionEnum;
+  description: string;
+  oldValue?: Record<string, unknown>;
+  newValue?: Record<string, unknown>;
+  member: string;
+}
+
+export type ActivityResponseDto = Omit<IActivity, "member"> & {
+  member: {
+    userId: string;
+    name: string;
+    email: string;
+    profile?: string;
+  };
+};

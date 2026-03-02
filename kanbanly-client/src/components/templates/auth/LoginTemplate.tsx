@@ -82,7 +82,7 @@ const LoginTemplate = ({
         </div>
 
         {/* Login Card */}
-        <Card className="backdrop-blur-lg bg-[#273444] border-0 shadow-2xl">
+        <Card className="backdrop-blur-lg dark:bg-[#273444] border-0 shadow-2xl">
           <CardHeader className="space-y-1 text-center pb-4">
             <CardTitle className="text-2xl text white">Login</CardTitle>
             <CardDescription className="text-muted-foreground">
@@ -161,7 +161,7 @@ const LoginTemplate = ({
             </motion.div>
 
             <div className="text-center text-sm text-muted-foreground">
-              don't have an account?{" "}
+              don&#39;t have an account?{" "}
               <Link
                 href="/signup"
                 className="text-primary hover:text-primary/80 font-medium transition-colors"

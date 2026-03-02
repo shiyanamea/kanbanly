@@ -1,15 +1,16 @@
 import { inject, injectable } from "tsyringe";
+import { v4 as uuidv4 } from "uuid";
 import {
   CreateWorkspaceDto,
   EditWorkspaceDto,
   GetOneWorkspaceDto,
   GetOneWorkspaceResponseDto,
+  IWorkspacePermissions,
   WorkspaceListResponseDto,
 } from "../types/dtos/workspaces/workspace.dto";
-import { IWorkspace } from "../types/entities/IWrokspace";
+import { IWorkspace } from "../types/entities/IWorkspace";
 import { IWorkspaceService } from "../types/service-interface/IWorkspaceService";
 import { IWorkspaceRepository } from "../types/repository-interfaces/IWorkspaceRepository";
-import { v4 as uuidv4 } from "uuid";
 import AppError from "../shared/utils/AppError";
 import { HTTP_STATUS } from "../shared/constants/http.status";
 import { IWorkspaceMemberService } from "../types/service-interface/IWorkspaceMemberService";
@@ -18,10 +19,17 @@ import { IWorkspaceMemberRepository } from "../types/repository-interfaces/IWork
 import { IWorkspaceMember } from "../types/entities/IWorkspaceMember";
 import { ERROR_MESSAGES } from "../shared/constants/messages";
 import { IProjectRepository } from "../types/repository-interfaces/IProjectRepository";
-import { ITaskRepository } from "../types/repository-interfaces/ITaskRepository";
+import { IWorkItemRepository } from "../types/repository-interfaces/IWorkItemRepository";
+import { normalizeString } from "../shared/utils/stringNormalizer";
+import { ISubscriptionService } from "../types/service-interface/ISubscriptionService";
+import { DEFAULT_WORKSPACE_PERMISSIONS } from "../shared/constants/permissions";
+import { IPermissionService } from "../types/service-interface/IPermissionService";
+import { WorkspacePermission } from "../types/enums/workspace-permissions.enum";
+import { IUser } from "../types/entities/IUser";
 
 @injectable()
 export class WorkspaceService implements IWorkspaceService {
+  private _slugify;
   constructor(
     @inject("IWorkspaceRepository")
     private _workspaceRepo: IWorkspaceRepository,
@@ -30,15 +38,35 @@ export class WorkspaceService implements IWorkspaceService {
     @inject("IWorkspaceMemberRepository")
     private _workspaceMemberRepo: IWorkspaceMemberRepository,
     @inject("IProjectRepository") private _projectRepo: IProjectRepository,
-    @inject("ITaskRepository") private _taskRepo: ITaskRepository
-  ) {}
-
-  private slugify(name: string) {
-    return name.toLowerCase().replace(/\s+/g, "-");
+    @inject("IWorkItemRepository") private _workItemRepo: IWorkItemRepository,
+    @inject("ISubscriptionService")
+    private _subscriptionService: ISubscriptionService,
+    @inject("IPermissionService")
+    private _permissionService: IPermissionService
+  ) {
+    this._slugify = normalizeString;
   }
 
   async createWorkspace(workspaceData: CreateWorkspaceDto): Promise<void> {
-    const slugName = this.slugify(workspaceData.name);
+    const slugName = this._slugify(workspaceData.name);
+
+    const subscription = await this._subscriptionService.getUserSubscription(
+      workspaceData.createdBy
+    );
+    const workspaces = await this._workspaceRepo.find({
+      createdBy: workspaceData.createdBy,
+    });
+
+    const workspaceLimit = subscription?.limits.workspaces;
+    if (
+      workspaceLimit !== "unlimited" &&
+      Number(workspaceLimit) <= workspaces.length
+    ) {
+      throw new AppError(
+        ERROR_MESSAGES.WORKSPACE_LIMIT_EXCEED,
+        HTTP_STATUS.BAD_REQUEST
+      );
+    }
 
     const isExists = await this._workspaceRepo.findOne({
       createdBy: workspaceData.createdBy,
@@ -59,23 +87,60 @@ export class WorkspaceService implements IWorkspaceService {
       description: workspaceData.description,
       logo: workspaceData.logo,
       createdBy: workspaceData.createdBy,
+      permissions: DEFAULT_WORKSPACE_PERMISSIONS,
     };
 
     await this._workspaceRepo.create(workspace);
 
     await this._workspaceMemberService.addMember({
-      userId: workspaceData.createdBy,
+      invitedUserId: workspaceData.createdBy,
       workspaceId: workspace.workspaceId,
       role: workspaceRoles.owner,
     });
   }
 
-  async getAllWorkspaces(userId: string): Promise<WorkspaceListResponseDto[]> {
+  async getAllWorkspaces(
+    userId: string,
+    role: string,
+    search?: string,
+    page?: number
+  ): Promise<WorkspaceListResponseDto> {
+    if (role === "admin") {
+      const skip = ((page || 1) - 1) * 10;
+      const workspaces = await this._workspaceRepo.findWorkspacesWithOwner({
+        limit: 10,
+        skip,
+        search,
+      });
+      const totalWorkspaces = await this._workspaceRepo.countWorkspaces();
+      const totalPages = Math.round(totalWorkspaces / 10);
+
+      const modified = workspaces.map((workspace) => {
+        const createdBy = workspace.createdBy as IUser;
+        return {
+          workspaceId: workspace.workspaceId,
+          name: workspace.name,
+          description: workspace.description,
+          createdBy: {
+            userId: createdBy.userId,
+            email: createdBy.email,
+            name: createdBy.firstName,
+            profile: createdBy.profile,
+          },
+          memberCount: workspace.memberCount,
+          logo: workspace.logo,
+          slug: workspace.slug,
+        };
+      });
+
+      return { workspaces: modified, totalPages };
+    }
+
     const memberWorkspaces: IWorkspaceMember[] =
       await this._workspaceMemberRepo.find({ userId });
 
-    const memberWorkspaceIds = memberWorkspaces.map((workspace) =>
-      workspace.workspaceId.toString()
+    const memberWorkspaceIds = memberWorkspaces.map(
+      (workspace) => workspace.workspaceId
     );
 
     const workspaces = await this._workspaceRepo.findAllWorkspaces(
@@ -93,7 +158,7 @@ export class WorkspaceService implements IWorkspaceService {
       };
     });
 
-    return modified;
+    return { workspaces: modified };
   }
 
   async getOneWorkspace(
@@ -128,27 +193,28 @@ export class WorkspaceService implements IWorkspaceService {
       createdAt: workspace.createdAt,
       logo: workspace.logo || "",
       members: count,
+      permissions: workspace.permissions,
     };
 
     return mappedWorkspace;
   }
 
   async editWorkspace(data: EditWorkspaceDto): Promise<void> {
-    const workspace = await this._workspaceRepo.findOne({
-      workspaceId: data.workspaceId,
-      createdBy: data.createdBy,
-    });
-
-    if (!workspace) {
+    const hasPermission = await this._permissionService.hasPermission(
+      data.createdBy,
+      data.workspaceId,
+      WorkspacePermission.WORKSPACE_EDIT
+    );
+    if (!hasPermission) {
       throw new AppError(
-        ERROR_MESSAGES.WORKSPACE_NOT_FOUND,
-        HTTP_STATUS.NOT_FOUND
+        ERROR_MESSAGES.INSUFFICIENT_PERMISSION,
+        HTTP_STATUS.BAD_REQUEST
       );
     }
 
     let slugName;
     if (data.name) {
-      slugName = this.slugify(data.name);
+      slugName = this._slugify(data.name);
       const isExists = await this._workspaceRepo.findOne({
         createdBy: data.createdBy,
         slug: slugName,
@@ -178,21 +244,67 @@ export class WorkspaceService implements IWorkspaceService {
     );
   }
 
-  async removeWorkspace(workspaceId: string, userId: string): Promise<void> {
-    const workspace = await this._workspaceRepo.findOne({
+  async updateRolePermissions(
+    workspaceId: string,
+    role: workspaceRoles,
+    newPermissions: Partial<IWorkspacePermissions>,
+    userId: string
+  ): Promise<void> {
+    const member = await this._workspaceMemberRepo.findOne({
+      userId,
       workspaceId,
-      createdBy: userId,
     });
-    if (!workspace) {
+    if (!member)
+      throw new AppError(ERROR_MESSAGES.NOT_MEMBER, HTTP_STATUS.BAD_REQUEST);
+
+    if (member.role !== "owner") {
       throw new AppError(
-        "Workspace not found or you don't have enough permission",
+        ERROR_MESSAGES.INSUFFICIENT_PERMISSION,
         HTTP_STATUS.BAD_REQUEST
       );
     }
 
+    const workspace = await this._workspaceRepo.findOne({ workspaceId });
+    if (!workspace) {
+      throw new AppError(
+        ERROR_MESSAGES.WORKSPACE_NOT_FOUND,
+        HTTP_STATUS.NOT_FOUND
+      );
+    }
+
+    workspace.permissions[role] = {
+      ...workspace.permissions[role],
+      ...newPermissions,
+    };
+
+    await this._workspaceRepo.update(
+      { workspaceId },
+      { permissions: workspace.permissions }
+    );
+  }
+
+  async removeWorkspace(
+    workspaceId: string,
+    userId: string,
+    role: string
+  ): Promise<void> {
+    // skip this for platform admin
+    if (role === "user") {
+      const workspace = await this._workspaceRepo.findOne({
+        workspaceId,
+        createdBy: userId,
+      });
+      if (!workspace) {
+        throw new AppError(
+          "Workspace not found or you don't have enough permission",
+          HTTP_STATUS.BAD_REQUEST
+        );
+      }
+    }
+
     await this._workspaceMemberRepo.deleteMany({ workspaceId });
     await this._projectRepo.deleteMany({ workspaceId });
-    await this._taskRepo.deleteMany({ workspaceId });
+    await this._workItemRepo.deleteMany({ workspaceId });
     await this._workspaceRepo.delete({ workspaceId });
   }
 }

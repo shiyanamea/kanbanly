@@ -9,3 +9,11 @@ export enum TaskStatus {
   InProgress = "inprogress",
   Completed = "completed",
 }
+
+export enum WorkItemType {
+  Bug = "bug",
+  Task = "task",
+  Story = "story",
+  Epic = "epic",
+  Subtask = "subtask",
+}

@@ -1,15 +1,14 @@
 "use client";
 import AdminDashboardTemplate from "@/components/templates/admin/AdminDashboardTemplate";
-import { useAdminLogout } from "@/lib/hooks/useAuth";
+import { useGetAnalytics } from "@/lib/hooks/useAdmin";
 import React from "react";
 
-function page() {
-  const { mutate: logout } = useAdminLogout();
+export default function AdminDashboardPage() {
+  const { data: analytics } = useGetAnalytics();
 
-  function handleLogout() {
-    logout();
+  if (!analytics?.data) {
+    return;
   }
-  return <AdminDashboardTemplate handleLogout={handleLogout} />;
-}
 
-export default page;
+  return <AdminDashboardTemplate analytics={analytics.data} />;
+}

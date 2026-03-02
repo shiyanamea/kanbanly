@@ -3,7 +3,7 @@ export const SUCCESS_MESSAGES = {
   LOGIN_SUCCESSFUL: "User logged in successfully.",
   DATA_FETCHED: "Data fetched successfully.",
   DATA_CREATED: "Data Created Successfully",
-  DATA_EDITED: "Data Edited Successfully",
+  DATA_EDITED: "Data Updated Successfully",
   DATA_DELETED: "Data Deleted Successfully",
   USER_UPDATED: "User updated successfully.",
   USER_LOGOUT: "User logout successfully.",
@@ -14,6 +14,9 @@ export const SUCCESS_MESSAGES = {
   EMAIL_VERIFIED: "Email verification was successfull",
   PROJECT_CREATED: "Project Created Successfully",
   MEMBER_ADDED: "Member added successfully",
+  MEMBER_REMOVED: "Member successfully removed",
+  // SPRINT
+  SPRINT_STARTED: "Sprint is now active! Time to get to work. Good luck, team!",
 };
 
 export const ERROR_MESSAGES = {
@@ -24,11 +27,13 @@ export const ERROR_MESSAGES = {
   USER_NOT_FOUND: "User not found.",
   INVALID_CREDENTIALS: "Invalid email or password.",
   RESOURCE_NOT_FOUND: "The requested resource was not found.",
-  UNAUTHORIZED_ACCESS: "Unauthorized access.",
+  RESOURCE_ALREADY_EXISTS: "The resource already exists.",
+  UNAUTHORIZED_ACCESS: "Unauthorized: Missing information",
   FORBIDDEN_ACCESS: "Forbidden access.",
   AUTH_NO_TOKEN_PROVIDED: "Access Denied: No authentication token provided.",
   AUTH_INVALID_TOKEN: "Access Denied: Invalid or expired authentication token.",
   AUTH_TOKEN_ERROR: "Authentication error: Could not process token.",
+  DELETE_YOURSELF: "You cannot remove yourself",
 
   // USER
   USER_NOT_EXIST_OR_ALREADY_VERIFIED: "User not exists or already verified.",
@@ -38,17 +43,62 @@ export const ERROR_MESSAGES = {
   // WORKSPACE
   WORKSPACE_NOT_FOUND: "The workspace is not exists",
   WORKSPACE_ALREADY_EXISTS: "The workspace already exists",
+  WORKSPACE_LIMIT_EXCEED:
+    "Workspace limit exceeded.Upgrade the plan to continue",
 
   // WORKSPACE MEMBER
   NOT_OWNER: "You are not the owner of this workspace",
-  NOT_MEMBER: "User is not a member of this workspace",
+  NOT_MEMBER: "You are not a member of this workspace",
   ACTION_DENIED:
     "Action denied: your role does not have the required permissions.",
   MEMBER_NOT_FOUND: "The member is not found",
   INSUFFICIENT_PERMISSION: "Insufficient permission",
+  ALREADY_MEMBER: "The member already exists",
 
   // PROJECT
   PROJECT_ALREADY_EXISTS: "Project with this name already exists",
-  INVALID_PROJECT_ID:
+  PROJECT_NOT_FOUND:
     "Invalid project or project doesn't belong to the specified workspace",
+  PROJECT_LIMIT_EXCEED:
+    "Project limit in a workspace exceeded.Upgrade the plan to continue",
+  PROJECTID_REQUIRED: "Project ID is required",
+  // TASK
+  TASK_NOT_FOUND: "The task not found",
+
+  // INVITATION
+  EXPIRED_LINK: "The link has expired",
+
+  // PLAN
+  PLAN_NOT_EXISTS: "Plan not found",
+
+  // SUBSCRIPTION
+  ACTIVE_SUBSCRIPTION: "User already have an active subscription",
+  NO_ACTIVE_SUBSCRIPTION: "User don't have any active subscription",
+  MISSING_PAYMENT_INFO: "The subscription have some missing items",
+
+  // EPIC
+  EPIC_ALREADY_EXISTS: "An epic of the same name exists",
+  EPIC_NOT_FOUND: "The epic not found",
+
+  // SPRINT
+  SPRINT_ALREADY_EXISTS: "A sprint of the same name exists",
+  SPRINT_NOT_EXISTS: "Sprint not found",
+  SPRINT_EXISTS_TASK: "The task is already a part of a sprint",
+  ACTIVE_SPRINT_EXISTS: "Another sprint is already active.",
+  EMPTY_SPRINT:
+    "This sprint is empty. Please add issues from the backlog before starting.",
+  NO_ACTIVE_SPRINT: "There are no active sprints",
+
+  // CHAT
+  CHAT_NO_PARTICIPANTS: "At least one participant is required",
+  CHAT_DIRECT_MEMBER_LIMIT: "A direct chat must have exactly 2 participants",
+  CHAT_ID_REQUIRED: "Chat ID is required.",
+  CAN_NOT_CHAT_YOURSELF: "You can't chat your self",
+  CHAT_NOT_FOUND: "Chat doesn't exists",
+  // PREFERENCE
+  PREFERENCE_NOT_FOUND: "Preference data not found. Please contact support",
+  // COMMENT
+  COMMENT_NOT_FOUND: "Comment doesn't exists",
+  // NOTFICATION
+  NOTIFICATION_NOT_FOUND:"Notification donesn't exists"
 };

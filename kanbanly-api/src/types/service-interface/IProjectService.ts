@@ -9,7 +9,17 @@ export interface IProjectService {
   addProject(data: CreateProjectDto): Promise<void>;
   getAllProjects(
     workspaceId: string,
-    userId: string
+    userId: string,
+    filters?: {
+      search?: string;
+      memberFilter?: string;
+    },
+    sorting?: {
+      sortBy?: string;
+      order?: string;
+    },
+    limit?: number,
+    skip?: number
   ): Promise<ProjectListDto[] | null>;
   getOneProject(
     workspaceId: string,
@@ -28,9 +38,16 @@ export interface IProjectService {
     projectId: string,
     email: string
   ): Promise<void>;
-  // getMembers(
-  //   workspaceId: string,
-  //   userId: string,
-  //   projectId: string
-  // ): Promise<WorkspaceMemberResponseDto[]>;
+  getMembers(
+    workspaceId: string,
+    userId: string,
+    projectId: string,
+    search?: string
+  ): Promise<Omit<WorkspaceMemberResponseDto, "isActive">[]>;
+  removeMember(
+    workspaceId: string,
+    projectId: string,
+    userId: string,
+    userToRemove: string
+  ): Promise<void>;
 }

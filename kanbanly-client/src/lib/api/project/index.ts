@@ -9,8 +9,28 @@ export const createProject = async (payload: ProjectCreationArgs) => {
   return response.data;
 };
 
-export const getAllProjects = async (data: { workspaceId: string }) => {
-  const response = await api.get(`/workspace/${data.workspaceId}/projects`);
+export const getAllProjects = async (data: {
+  workspaceId: string;
+  filters: {
+    search?: string;
+    memberCount?: { min?: number; max?: number };
+  };
+  sorting?: {
+    sortBy?: string;
+    order?: string;
+  };
+  limit?: number;
+  skip?: number;
+}) => {
+  const params = {
+    ...data.filters,
+    ...data.sorting,
+    limit: data.limit,
+    skip: data.skip,
+  };
+  const response = await api.get(`/workspace/${data.workspaceId}/projects`, {
+    params,
+  });
   return response.data;
 };
 
@@ -50,6 +70,31 @@ export const addMember = async (data: {
   const response = await api.patch(
     `/workspace/${data.workspaceId}/projects/${data.projectId}/members`,
     data.data
+  );
+  return response.data;
+};
+
+export const getMembers = async (
+  workspaceId: string,
+  projectId: string,
+  search?: string
+) => {
+  const response = await api.get(
+    `/workspace/${workspaceId}/projects/${projectId}/members`,
+    {
+      params: { search },
+    }
+  );
+  return response.data;
+};
+
+export const removeProjectMember = async (payload: {
+  workspaceId: string;
+  projectId: string;
+  memberId: string;
+}) => {
+  const response = await api.delete(
+    `/workspace/${payload.workspaceId}/projects/${payload.projectId}/members/${payload.memberId}`
   );
   return response.data;
 };

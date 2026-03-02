@@ -3,10 +3,11 @@ import CustomLoader from "@/components/organisms/user/CustomLoader";
 import InvitationFailureTemplate from "@/components/templates/workspace/InvitationFailureTemplate";
 import { useVerifyInvitation } from "@/lib/hooks/useWorkspace";
 import { AxiosError } from "axios";
-import {  useSearchParams } from "next/navigation";
-import React, { useEffect } from "react";
+import { useSearchParams } from "next/navigation";
+import React, { Suspense, useEffect } from "react";
+import { SuspenseLoader } from "@/components/organisms/SuspenseLoader";
 
-function page() {
+function InvitationHandleContent() {
   const searchParams = useSearchParams();
   const token = searchParams.get("token");
 
@@ -22,7 +23,7 @@ function page() {
     if (token && !isLoading && !isSuccess && !isError) {
       verifyInvitation({ token });
     }
-  }, [token, verifyInvitation]);
+  }, [token, verifyInvitation, isLoading, isError, isSuccess]);
 
   if (isLoading) {
     return <CustomLoader title="Verifying Request" span="Please Wait" />;
@@ -32,7 +33,7 @@ function page() {
     const errorMessage =
       (error as AxiosError<{ success: boolean; message: string }>)?.response
         ?.data.message || "An unknown error occurred.";
-        
+
     return <InvitationFailureTemplate errorMessage={errorMessage} />;
   }
 
@@ -43,4 +44,10 @@ function page() {
   }
 }
 
-export default page;
+export default function InvitationHandlePage() {
+  return (
+    <Suspense fallback={<SuspenseLoader />}>
+      <InvitationHandleContent />
+    </Suspense>
+  );
+}

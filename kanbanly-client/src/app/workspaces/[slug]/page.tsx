@@ -1,13 +1,23 @@
 "use client";
 import HomeTemplate from "@/components/templates/workspace/HomeTemplate";
-import React from "react";
+import { useGetDashboardData } from "@/lib/hooks/useWorkspace";
+import { RootState } from "@/store";
+import { useSelector } from "react-redux";
 
-function page() {
+export default function WorkspaceDashboardPage() {
+  const workspaceId = useSelector(
+    (state: RootState) => state.workspace.workspaceId
+  );
+
+  const { data: dashboardData } = useGetDashboardData(workspaceId);
+
+  if (!dashboardData?.data) {
+    return;
+  }
+
   return (
     <div>
-      <HomeTemplate />
+      <HomeTemplate dashboardData={dashboardData.data} />
     </div>
   );
 }
-
-export default page;

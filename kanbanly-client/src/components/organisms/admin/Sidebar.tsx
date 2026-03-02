@@ -1,13 +1,7 @@
 "use client";
 import { Button } from "@/components/atoms/button";
-import {
-  BarChart3,
-  ChevronLeft,
-  Home,
-  FileText,
-  Users,
-  Map,
-} from "lucide-react";
+import Logo from "@/components/atoms/logo";
+import { ChevronLeft, Home, Users, Map, Building2 } from "lucide-react";
 import Link from "next/link";
 import { useState } from "react";
 
@@ -25,10 +19,7 @@ export function AppSidebar() {
       {/* Header */}
       <div className="flex items-center justify-between p-4">
         <div className="flex items-center gap-2">
-          <div className="p-2 bg-gradient-to-r from-blue-500 to-purple-600 rounded-lg">
-            <BarChart3 className="h-5 w-5 text-white" />
-          </div>
-          {!collapsed && <h2 className="text-lg font-bold">Kanbanly</h2>}
+          <Logo isCollapsed={collapsed} />
         </div>
         <Button
           size="icon"
@@ -75,7 +66,7 @@ export function AppSidebar() {
             </li>
             <li>
               <Link
-                href="/admin/dashbord"
+                href="/admin/plans"
                 className="flex items-center gap-2 px-2 py-2 rounded-md transition-colors
                     hover:bg-zinc-100 hover:text-zinc-900
                     dark:hover:bg-zinc-800 dark:hover:text-zinc-100"
@@ -86,13 +77,13 @@ export function AppSidebar() {
             </li>
             <li>
               <Link
-                href="/admin/dashbord"
+                href="/admin/workspaces"
                 className="flex items-center gap-2 px-2 py-2 rounded-md transition-colors
                     hover:bg-zinc-100 hover:text-zinc-900
                     dark:hover:bg-zinc-800 dark:hover:text-zinc-100"
               >
-                <FileText className="h-4 w-4" />
-                {!collapsed && <span>Reports</span>}
+                <Building2 className="h-4 w-4" />
+                {!collapsed && <span>Workspaces</span>}
               </Link>
             </li>
           </ul>

@@ -9,7 +9,6 @@ import {
 import AppError from "../shared/utils/AppError";
 import { ERROR_MESSAGES } from "../shared/constants/messages";
 import { HTTP_STATUS } from "../shared/constants/http.status";
-import { IUser } from "../types/entities/IUser";
 import { IBcryptUtils } from "../types/common/IBcryptUtils";
 
 @injectable()
@@ -25,13 +24,14 @@ export class UserService implements IUserService {
       throw new AppError(ERROR_MESSAGES.USER_NOT_FOUND, HTTP_STATUS.NOT_FOUND);
     }
     if (!user.isActive) {
-      throw new AppError(ERROR_MESSAGES.USER_BLOCKED, HTTP_STATUS.BAD_REQUEST);
+      throw new AppError(ERROR_MESSAGES.USER_BLOCKED, HTTP_STATUS.FORBIDDEN);
     }
 
     return {
       firstName: user.firstName,
       lastName: user.lastName,
       email: user.email,
+      profile: user.profile,
       createdAt: user.createdAt,
       isGoogleLogin: user.password ? false : true,
     };
@@ -43,9 +43,10 @@ export class UserService implements IUserService {
       throw new AppError(ERROR_MESSAGES.USER_NOT_FOUND, HTTP_STATUS.NOT_FOUND);
     }
 
-    const newUser: Partial<IUser> = {
+    const newUser: Omit<EditUserDto, "userId"> = {
       ...(data.firstName && { firstName: data.firstName }),
       ...(data.lastName && { lastName: data.lastName }),
+      ...(data.profile && { profile: data.profile }),
     };
 
     await this._userRepo.update({ userId: data.userId }, newUser);
@@ -68,7 +69,7 @@ export class UserService implements IUserService {
     if (!isPasswordMatch) {
       throw new AppError("Invalid Password", HTTP_STATUS.BAD_REQUEST);
     }
-    console.log(isPasswordMatch);
+
     const hashedPassword = await this._passwordBcrypt.hash(data.newPassword);
 
     await this._userRepo.update(

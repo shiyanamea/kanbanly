@@ -1,6 +1,6 @@
 "use client";
-import { useState } from "react";
-import { Edit3, Save, X, Trash, Users, Table, Plus } from "lucide-react";
+import { useState, useRef } from "react";
+import { Edit3, Save, X, Trash, Users, Plus } from "lucide-react";
 import { Button } from "@/components/atoms/button";
 import { Card, CardContent } from "@/components/atoms/card";
 import { Input } from "@/components/atoms/input";
@@ -13,9 +13,10 @@ import {
   ProjectEditingPayload,
 } from "@/lib/api/project/project.types";
 import { getDate } from "@/lib/utils";
-import { workspaceRoles } from "@/types/roles.enum";
-import DataTable from "@/components/organisms/DataTable";
-import { InviteUserProjectModal } from "@/components/organisms/project/InviteUserProjectModal";
+import { WorkspaceMember } from "@/lib/api/workspace/workspace.types";
+import { InviteUserDropdown } from "@/components/molecules/InviteUserDropdown";
+import { createProjectMemberColumns } from "@/lib/columns/project-member.column";
+import CustomTable from "@/components/organisms/CustomTable";
 
 interface ProjectManagementTemplateProps {
   projectData: Omit<IProject, "workspaceId" | "slug" | "createdBy">;
@@ -25,6 +26,10 @@ interface ProjectManagementTemplateProps {
   isMemberAdding: boolean;
   isDeleting: boolean;
   isEditLoading: boolean;
+  members?: WorkspaceMember[];
+  isProjectMembersFetching: boolean;
+  handleMemberRemoving: (userId: string) => void;
+  isMemberRemoving: boolean;
 }
 
 export function ProjectManagementTemplate({
@@ -35,13 +40,20 @@ export function ProjectManagementTemplate({
   isEditLoading,
   handleMemberAdding,
   isMemberAdding,
-}: ProjectManagementTemplateProps) {
+  members,
+  isProjectMembersFetching,
+  handleMemberRemoving,
+}: // isMemberRemoving,
+ProjectManagementTemplateProps) {
   const [isEditing, setIsEditing] = useState(false);
   const [editData, setEditData] = useState<ProjectEditingPayload | null>(null);
-  const [isModalOpen, setIsModalOpen] = useState(false);
-  const [isInviteModalOpen, setIsInviteModalOpen] = useState(false);
+  const [isDropdownOpen, setIsDropdownOpen] = useState(false);
+  const buttonRef = useRef<HTMLButtonElement>(null);
+  // member removal
+  const [modalType, setModalType] = useState<"project" | "member" | null>(null);
+  const [selectedMember, setSelectedMember] = useState("");
 
-  const role = useSelector((state: RootState) => state.workspace.memberRole);
+  const { permissions } = useSelector((state: RootState) => state.workspace);
 
   const handleSave = () => {
     if (!editData) {
@@ -59,11 +71,40 @@ export function ProjectManagementTemplate({
     setIsEditing(false);
   };
 
-  const havePermission =
-    role === workspaceRoles.owner || role === workspaceRoles.projectManager;
+  // Wrapper function to handle the dropdown invitation format
+  const handleDropdownInvite = (data: {
+    invitedEmail?: string;
+    email?: string;
+    role?: string;
+  }) => {
+    if (data.email) {
+      handleMemberAdding({ email: data.email });
+    }
+  };
 
   // members table
-  const headings = ["Name", "Email", "Role", "Action"];
+  const headings = ["Name", "Email", "Role"];
+  if (permissions?.projectMemberDelete) {
+    headings.push("Action");
+  }
+
+  const cols = createProjectMemberColumns((id: string) => {
+    setModalType("member");
+    setSelectedMember(id);
+  }, !!permissions?.projectMemberDelete);
+
+  // for confirmation modal
+  const modalContentMap = {
+    project: {
+      title: "Delete Project?",
+      description:
+        "This action will permanently delete the project and all associated tasks. This cannot be undone. Are you sure you want to proceed?",
+    },
+    member: {
+      title: "Remove Member?",
+      description: `Are you sure you want to remove this member from the project? This action cannot be undone.`,
+    },
+  };
 
   return (
     <main className="flex-1 p-8">
@@ -79,23 +120,27 @@ export function ProjectManagementTemplate({
             </p>
           </div>
 
-          {!isEditing && havePermission && (
+          {!isEditing && (
             <div className="flex gap-5">
-              <Button
-                disabled={isDeleting}
-                onClick={() => setIsModalOpen(true)}
-                className="bg-red-500/80 hover:bg-red-500"
-              >
-                <Trash className="w-4 h-4 mr-2" />
-                {isDeleting ? "Deleting" : "Delete Project"}
-              </Button>
-              <Button
-                onClick={handleEdit}
-                className="bg-primary hover:bg-primary/90"
-              >
-                <Edit3 className="w-4 h-4 mr-2" />
-                Edit Details
-              </Button>
+              {permissions?.projectDelete && (
+                <Button
+                  disabled={isDeleting}
+                  onClick={() => setModalType("project")}
+                  className="bg-red-500/80 hover:bg-red-500"
+                >
+                  <Trash className="w-4 h-4 mr-2" />
+                  {isDeleting ? "Removing..." : "Remove Project"}
+                </Button>
+              )}
+              {permissions?.projectEdit && (
+                <Button
+                  onClick={handleEdit}
+                  className="bg-primary hover:bg-primary/90"
+                >
+                  <Edit3 className="w-4 h-4 mr-2" />
+                  Edit Details
+                </Button>
+              )}
             </div>
           )}
         </div>
@@ -213,36 +258,53 @@ export function ProjectManagementTemplate({
           {/* Members Card */}
           <Card className="bg-blue-200/5 border-workspace-border">
             <CardContent className="p-8">
-              <div className="w-full text-end pb-5">
-                <Button onClick={() => setIsInviteModalOpen(true)}>
-                  <Plus />
-                  Add User
-                </Button>
-              </div>
+              {permissions?.projectMemberAdd && (
+                <div className="w-full text-end pb-5">
+                  <Button
+                    ref={buttonRef}
+                    onClick={() => setIsDropdownOpen(true)}
+                  >
+                    <Plus />
+                    Add User
+                  </Button>
+                </div>
+              )}
               <div className="flex items-start gap-8">
-                <DataTable headings={headings} />
+                <CustomTable
+                  columns={cols}
+                  data={members ? members : []}
+                  emptyMessage="No Members"
+                  isLoading={isProjectMembersFetching}
+                  getRowKey={(row) => row._id}
+                />
               </div>
             </CardContent>
           </Card>
         </div>
       </div>
-      <InviteUserProjectModal
-        isOpen={isInviteModalOpen}
+      <InviteUserDropdown
+        isOpen={isDropdownOpen}
         isLoading={isMemberAdding}
-        onClose={() => setIsInviteModalOpen(false)}
-        onInvite={handleMemberAdding}
+        onClose={() => setIsDropdownOpen(false)}
+        onInvite={handleDropdownInvite}
+        buttonRef={buttonRef}
       />
       <ConfirmationModal
-        isOpen={isModalOpen}
-        onClose={() => setIsModalOpen(false)}
+        isOpen={modalType !== null}
+        onClose={() => setModalType(null)}
         onConfirm={() => {
-          handleDelete();
-          setIsModalOpen(false);
+          if (modalType === "project") {
+            handleDelete();
+          } else {
+            handleMemberRemoving(selectedMember);
+            setSelectedMember("");
+          }
+          setModalType(null);
         }}
-        title="Delete Project?"
-        description="This action will permanently delete the project and all associated tasks. This cannot be undone. Are you sure you want to proceed?"
+        title={modalType ? modalContentMap[modalType].title : ""}
+        description={modalType ? modalContentMap[modalType!].description : ""}
         cancelText="Cancel"
-        confirmText="Delete"
+        confirmText="Remove"
       />
     </main>
   );

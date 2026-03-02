@@ -1,8 +1,10 @@
-import { projectStatus } from "@/types/project.enum";
+import { projectStatus, projectTemplate } from "@/types/project.enum";
 
 export interface ProjectCreationPayload {
   name: string;
   description: string;
+  key: string;
+  template: projectTemplate;
 }
 
 export interface ProjectCreationArgs {
@@ -21,9 +23,11 @@ export interface ProjectEditingArgs {
 export interface IProject {
   projectId: string;
   name: string;
+  key: string;
   description: string;
   members: string[];
   status?: projectStatus;
+  template: projectTemplate;
   lastUpdated?: string;
   createdAt?: string;
 }

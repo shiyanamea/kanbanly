@@ -3,11 +3,7 @@ import { IWorkspaceMemberRepository } from "../types/repository-interfaces/IWork
 import { BaseRepository } from "./base.repository";
 import { IWorkspaceMember } from "../types/entities/IWorkspaceMember";
 import { workspaceMemberModel } from "../models/workspaceMembers.model";
-import { PaginatedResponseDto } from "../types/dtos/paginated.dto";
-import {
-  WorkspaceMemberDto,
-  WorkspaceMemberRepoDto,
-} from "../types/dtos/workspaces/workspace-member.dto";
+import { WorkspaceMemberRepoDto } from "../types/dtos/workspaces/workspace-member.dto";
 
 @injectable()
 export class WorkspaceMemberRepository
@@ -20,29 +16,12 @@ export class WorkspaceMemberRepository
 
   async getMembers(
     workspaceId: string,
-    skip: number,
-    limit: number
+    skip: number = 0,
+    limit: number = 10,
+    search = ""
   ): Promise<WorkspaceMemberRepoDto> {
     const result = await this.model.aggregate([
-      { $match: { workspaceId } },
-      {
-        $lookup: {
-          from: "users",
-          localField: "userId",
-          foreignField: "userId",
-          as: "user",
-        },
-      },
-      { $unwind: "$user" },
-      {
-        $project: {
-          _id: 0,
-          role: 1,
-          "user.firstName": 1,
-          "user.email": 1,
-          "user.userId": 1,
-        },
-      },
+      { $match: { workspaceId, email: { $regex: search, $options: "i" } } },
       {
         $facet: {
           data: [{ $skip: skip }, { $limit: limit }],
@@ -52,7 +31,6 @@ export class WorkspaceMemberRepository
     ]);
     const { data, totalCount } = result[0];
     const count = totalCount?.[0]?.count || 0;
-    console.log(data);
     return { data, count };
   }
 
@@ -65,5 +43,18 @@ export class WorkspaceMemberRepository
     userId: string
   ): Promise<IWorkspaceMember | null> {
     return await this.model.findOne({ workspaceId, userId }).populate("userId");
+  }
+
+  async countJoinedThisWeek(workspaceId: string): Promise<number> {
+    const now = new Date();
+    const day = now.getDay();
+    const monday = new Date(now);
+    monday.setDate(now.getDate() - day + (day === 0 ? -6 : 1));
+    monday.setHours(0, 0, 0, 0);
+
+    return this.model.countDocuments({
+      workspaceId,
+      createdAt: { $gte: monday },
+    });
   }
 }

@@ -1,5 +1,7 @@
 import { inject, injectable } from "tsyringe";
 import {
+  CurrentMemberResponseDto,
+  EditWorkspaceMemberDto,
   WorkspaceMemberDto,
   WorkspaceMemberResponseDto,
   workspaceRoles,
@@ -13,6 +15,8 @@ import { PaginatedResponseDto } from "../types/dtos/paginated.dto";
 import { ERROR_MESSAGES } from "../shared/constants/messages";
 import { IWorkspaceMember } from "../types/entities/IWorkspaceMember";
 import { IUserRepository } from "../types/repository-interfaces/IUserRepository";
+import { IPermissionService } from "../types/service-interface/IPermissionService";
+import { WorkspacePermission } from "../types/enums/workspace-permissions.enum";
 
 @injectable()
 export class WorkspaceMemberService implements IWorkspaceMemberService {
@@ -21,30 +25,59 @@ export class WorkspaceMemberService implements IWorkspaceMemberService {
     private _workspaceMemberRepo: IWorkspaceMemberRepository,
     @inject("IWorkspaceRepository")
     private _workspaceRepo: IWorkspaceRepository,
-    @inject("IUserRepository") private _userRepo: IUserRepository
+    @inject("IUserRepository") private _userRepo: IUserRepository,
+    @inject("IPermissionService") private _permissionService: IPermissionService
   ) {}
 
   async addMember(data: WorkspaceMemberDto): Promise<void> {
+    if (data.inviterUserId) {
+      // permission check
+      const hasPermission = await this._permissionService.hasPermission(
+        data.inviterUserId,
+        data.workspaceId,
+        WorkspacePermission.WORKSPACE_MEMBER_ADD
+      );
+      if (!hasPermission) {
+        throw new AppError(
+          ERROR_MESSAGES.INSUFFICIENT_PERMISSION,
+          HTTP_STATUS.BAD_REQUEST
+        );
+      }
+    }
+
+    const user = await this._userRepo.findOne({ userId: data.invitedUserId });
+    if (!user) {
+      throw new AppError(
+        ERROR_MESSAGES.MEMBER_NOT_FOUND,
+        HTTP_STATUS.NOT_FOUND
+      );
+    }
+
     if (!Object.values(workspaceRoles).includes(data.role)) {
       throw new AppError("invalid role", HTTP_STATUS.BAD_REQUEST);
     }
 
-    const workspace = await this._workspaceRepo.findOne({
-      workspaceId: data.workspaceId,
-    });
-    if (!workspace) {
-      throw new AppError("workspace not found", HTTP_STATUS.BAD_REQUEST);
-    }
-
     const existingMember = await this._workspaceMemberRepo.findOne({
       workspaceId: data.workspaceId,
-      userId: data.userId,
+      userId: data.invitedUserId,
     });
     if (existingMember) {
-      throw new AppError("member already exists", HTTP_STATUS.BAD_REQUEST);
+      throw new AppError(
+        ERROR_MESSAGES.ALREADY_MEMBER,
+        HTTP_STATUS.BAD_REQUEST
+      );
     }
 
-    await this._workspaceMemberRepo.create(data);
+    const workspaceMember: Omit<IWorkspaceMember, "createdAt"> = {
+      workspaceId: data.workspaceId,
+      userId: data.invitedUserId,
+      email: user.email,
+      name: user.firstName,
+      role: data.role,
+      isActive: true,
+    };
+
+    await this._workspaceMemberRepo.create(workspaceMember);
   }
 
   async isMember(workspaceId: string, userId: string): Promise<boolean> {
@@ -58,34 +91,45 @@ export class WorkspaceMemberService implements IWorkspaceMemberService {
   async getMembers(
     workspaceId: string,
     userId: string,
-    page: number
+    page: number,
+    limit: number,
+    search: string
   ): Promise<PaginatedResponseDto<WorkspaceMemberResponseDto[]>> {
-    const limit = 10;
     const skip = (page - 1) * limit;
 
     const member = await this._workspaceMemberRepo.findOne({
       workspaceId,
       userId,
+      isActive: true,
     });
     if (!member) {
       throw new AppError(
-        ERROR_MESSAGES.UNAUTHORIZED_ACCESS,
-        HTTP_STATUS.UNAUTHORIZED
+        ERROR_MESSAGES.FORBIDDEN_ACCESS,
+        HTTP_STATUS.FORBIDDEN
       );
     }
 
     const rawMembers = await this._workspaceMemberRepo.getMembers(
       workspaceId,
       skip,
-      limit
+      limit,
+      search
     );
 
-    const members = rawMembers.data.map((member) => {
+    const isOwner = member.role === "owner";
+
+    const filteredData = isOwner
+      ? rawMembers.data
+      : rawMembers.data.filter((member) => member.isActive);
+
+    const members = filteredData.map((member) => {
       return {
-        name: member.user.firstName,
-        email: member.user.email,
+        _id: member.userId,
+        name: member.name,
+        email: member.email,
+        profile: member.profile,
         role: member.role,
-        _id: member.user.userId,
+        isActive: member.isActive,
       };
     });
 
@@ -97,10 +141,18 @@ export class WorkspaceMemberService implements IWorkspaceMemberService {
   async getCurrentMember(
     workspaceId: string,
     userId: string
-  ): Promise<IWorkspaceMember> {
+  ): Promise<CurrentMemberResponseDto> {
+    const workspace = await this._workspaceRepo.findOne({ workspaceId });
+    if (!workspace) {
+      throw new AppError(
+        ERROR_MESSAGES.WORKSPACE_NOT_FOUND,
+        HTTP_STATUS.NOT_FOUND
+      );
+    }
     const workspaceMember = await this._workspaceMemberRepo.findOne({
       workspaceId,
       userId,
+      isActive: true,
     });
 
     if (!workspaceMember) {
@@ -112,9 +164,10 @@ export class WorkspaceMemberService implements IWorkspaceMemberService {
 
     return {
       userId: workspaceMember.userId,
-      workspaceId: workspaceMember.workspaceId,
       role: workspaceMember.role,
-      createdAt: workspaceMember.createdAt,
+      email: workspaceMember.email,
+      name: workspaceMember.name,
+      permissions: workspace.permissions[workspaceMember.role],
     };
   }
 
@@ -126,30 +179,24 @@ export class WorkspaceMemberService implements IWorkspaceMemberService {
     const member = await this._workspaceMemberRepo.findOne({
       userId,
       workspaceId,
+      isActive: true,
     });
     if (!member) {
-      throw new AppError(
-        "You are not a member of this workspace",
-        HTTP_STATUS.NOT_FOUND
-      );
+      throw new AppError(ERROR_MESSAGES.NOT_MEMBER, HTTP_STATUS.NOT_FOUND);
     }
 
     const isAllowed = member.role !== "member";
     if (!isAllowed) {
       throw new AppError(
-        ERROR_MESSAGES.UNAUTHORIZED_ACCESS,
-        HTTP_STATUS.UNAUTHORIZED
+        ERROR_MESSAGES.FORBIDDEN_ACCESS,
+        HTTP_STATUS.FORBIDDEN
       );
     }
 
-    const user = await this._userRepo.findOne({ email });
-    if (!user) {
-      throw new AppError(ERROR_MESSAGES.USER_NOT_FOUND, HTTP_STATUS.NOT_FOUND);
-    }
-
     const workspaceMember = await this._workspaceMemberRepo.findOne({
-      userId: user?.userId,
+      email,
       workspaceId,
+      isActive: true,
     });
 
     if (!workspaceMember) {
@@ -157,9 +204,91 @@ export class WorkspaceMemberService implements IWorkspaceMemberService {
     }
 
     return {
-      email: user.email,
-      name: user.firstName,
+      email: workspaceMember.email,
+      name: workspaceMember.name,
       role: workspaceMember?.role,
+      isActive: workspaceMember.isActive,
     };
+  }
+
+  async editWorkspaceMember(
+    workspaceId: string,
+    userId: string,
+    data: EditWorkspaceMemberDto
+  ): Promise<void> {
+    const member = await this._workspaceMemberRepo.findOne({
+      userId,
+      workspaceId,
+      isActive: true,
+    });
+    if (!member) {
+      throw new AppError(ERROR_MESSAGES.NOT_MEMBER, HTTP_STATUS.NOT_FOUND);
+    }
+
+    if (member.role !== "owner") {
+      throw new AppError(
+        ERROR_MESSAGES.FORBIDDEN_ACCESS,
+        HTTP_STATUS.FORBIDDEN
+      );
+    }
+
+    if (data.memberId === userId) {
+      throw new AppError("You can't edit yourself", HTTP_STATUS.BAD_REQUEST);
+    }
+
+    if (data?.role === "owner") {
+      throw new AppError(
+        "Can't make the member owner",
+        HTTP_STATUS.BAD_REQUEST
+      );
+    }
+
+    const newMemberData: Partial<IWorkspaceMember> = {
+      ...(data.role && { role: data.role }),
+      ...(data.isActive !== undefined && { isActive: data.isActive }),
+    };
+
+    await this._workspaceMemberRepo.update(
+      { userId: data.memberId, workspaceId },
+      newMemberData
+    );
+  }
+
+  async deleteMember(
+    workspaceId: string,
+    userId: string,
+    memberId: string
+  ): Promise<void> {
+    // permission check
+    const hasPermission = await this._permissionService.hasPermission(
+      userId,
+      workspaceId,
+      WorkspacePermission.WORKSPACE_MEMBER_DELETE
+    );
+    if (!hasPermission) {
+      throw new AppError(
+        ERROR_MESSAGES.INSUFFICIENT_PERMISSION,
+        HTTP_STATUS.BAD_REQUEST
+      );
+    }
+
+    const workspaceMember = await this._workspaceMemberRepo.findOne({
+      userId: memberId,
+    });
+    if (!workspaceMember) {
+      throw new AppError(
+        ERROR_MESSAGES.MEMBER_NOT_FOUND,
+        HTTP_STATUS.NOT_FOUND
+      );
+    }
+
+    if (memberId === userId) {
+      throw new AppError(
+        ERROR_MESSAGES.DELETE_YOURSELF,
+        HTTP_STATUS.BAD_REQUEST
+      );
+    }
+
+    await this._workspaceMemberRepo.delete({ userId: memberId });
   }
 }
