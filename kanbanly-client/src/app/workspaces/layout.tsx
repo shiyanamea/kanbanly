@@ -13,11 +13,11 @@ import { usePathname } from "next/navigation";
 import { ReactNode, useEffect } from "react";
 import { useSelector, useDispatch } from "react-redux";
 
-export default function Layout({ children }: { children: ReactNode }) {
-  const pathname = usePathname();
+// export default function Layout({ children }: { children: ReactNode }) {
+//   const pathname = usePathname();
 
-  const isLayoutNotNeeded =
-    pathname === "/workspaces" || pathname === "/workspaces/create";
+//   const isLayoutNotNeeded =
+//     pathname === "/workspaces" || pathname === "/workspaces/create";
 
   const workspaceId = useSelector(
     (state: RootState) => state.workspace.workspaceId
