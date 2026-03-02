@@ -28,17 +28,17 @@ export default function Layout({ children }: { children: ReactNode }) {
     isLayoutNotNeeded ? null : workspaceId
   );
 
-  // useEffect(() => {
-  //   if (workspaceMember?.data) {
-  //     dispatch(
-  //       setWorkspaceData({
-  //         workspaceId,
-  //         memberRole: workspaceMember.data.role,
-  //         permissions: workspaceMember.data.permissions,
-  //       })
-  //     );
-  //   }
-  // }, [workspaceId, workspaceMember?.data, dispatch]);
+  useEffect(() => {
+    if (workspaceMember?.data) {
+      dispatch(
+        setWorkspaceData({
+          workspaceId,
+          memberRole: workspaceMember.data.role,
+          permissions: workspaceMember.data.permissions,
+        })
+      );
+    }
+  }, [workspaceId, workspaceMember?.data, dispatch]);
 
   if (isLayoutNotNeeded) {
     return <>{children}</>;
@@ -62,11 +62,11 @@ function WorkspaceLayout({ children }: { children: ReactNode }) {
 
   return (
     <div className="min-h-screen w-full bg-background text-foreground transition-colors duration-300">
-      <UserSidebar />
+      {/* <UserSidebar />
       <SidebarInset>
         <Header />
         <div className={`pt-[75px] ${sidebarPadding}`}>{children}</div>
-      </SidebarInset>
+      </SidebarInset> */}
     </div>
   );
 }
