@@ -33,7 +33,7 @@ export const createWorkspacesColumns = (onRemove: (id: string) => void) => {
       cellClassName: "hover:bg-transperant",
       variant: "ghost",
       icon: () => <Trash />,
-      onClick: (row) => onRemove(row.workspaceId),
+      // onClick: (row) => onRemove(row.workspaceId),
     },
   ];
 
