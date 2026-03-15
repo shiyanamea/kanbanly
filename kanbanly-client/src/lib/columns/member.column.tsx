@@ -17,10 +17,10 @@ export const createMemberColumns = (
 ): TableColumn<WorkspaceMember>[] => {
   const columns: TableColumn<WorkspaceMember>[] = [
     {
-      key: "name",
-      label: "Name",
-      type: "custom",
-      render: (row, value) => (
+      // key: "name",
+      // label: "Name",
+      // type: "custom",
+      // render: (row, value) => (
         <div className="flex gap-5 items-center">
           <Avatar className="size-6">
             <AvatarImage src={row.profile} />
