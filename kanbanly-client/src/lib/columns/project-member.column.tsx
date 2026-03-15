@@ -11,14 +11,14 @@ export const createProjectMemberColumns = (
   hasPermission: boolean
 ): TableColumn<WorkspaceMember>[] => {
   const columns: TableColumn<WorkspaceMember>[] = [
-    // {
-    //   key: "name",
-    //   label: "Name",
-    //   type: "custom",
-    //   render: (row, value) => (
-    //     <div className="flex gap-5 items-center">
-    //       <Avatar className="size-6">
-    //         <AvatarImage src={row.profile} />
+    {
+      key: "name",
+      label: "Name",
+      type: "custom",
+      render: (row, value) => (
+        <div className="flex gap-5 items-center">
+          <Avatar className="size-6">
+            <AvatarImage src={row.profile} />
             <AvatarFallback className="w-full h-full flex items-center justify-center bg-primary text-primary-foreground text-sm font-bold rounded-full">
               {getAssignedTo({ email: row.email, name: row.name })}
             </AvatarFallback>
