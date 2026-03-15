@@ -10,10 +10,10 @@ import { Button } from "@/components/atoms/button";
 import { Calendar, MoreHorizontal } from "lucide-react";
 import { Dispatch, SetStateAction } from "react";
 import {
-  // Select,
-  // SelectContent,
-  // SelectItem,
-  // SelectTrigger,
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
   SelectValue,
 } from "@/components/atoms/select";
 import { WorkspaceMember } from "../api/workspace/workspace.types";
