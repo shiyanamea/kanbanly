@@ -10,18 +10,18 @@ import { Button } from "@/components/atoms/button";
 import { Calendar, MoreHorizontal } from "lucide-react";
 import { Dispatch, SetStateAction } from "react";
 import {
-  // Select,
-  // SelectContent,
-  // SelectItem,
-  // SelectTrigger,
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
   SelectValue,
 } from "@/components/atoms/select";
 import { WorkspaceMember } from "../api/workspace/workspace.types";
 
-interface TaskColumnProps {
-  handleStatusChange: (value: TaskStatus, taskId: string) => void;
-  handlePriorityChange: (value: TaskPriority, taskId: string) => void;
-  setIsTaskModalOpen: Dispatch<SetStateAction<boolean>>;
+// interface TaskColumnProps {
+//   handleStatusChange: (value: TaskStatus, taskId: string) => void;
+//   handlePriorityChange: (value: TaskPriority, taskId: string) => void;
+//   setIsTaskModalOpen: Dispatch<SetStateAction<boolean>>;
   setSelectedTask: Dispatch<SetStateAction<string>>;
 }
 
