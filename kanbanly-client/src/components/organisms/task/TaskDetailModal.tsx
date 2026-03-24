@@ -78,7 +78,7 @@ export const TaskDetails = ({
   const [editingName, setEditingName] = useState<string | null>(null);
   const inviteButtonRef = useRef<HTMLButtonElement | null>(null);
 
-  const taskContext = useTaskPageContext();
+  // const taskContext = useTaskPageContext();
   const params = useParams();
   const projectId = params.projectId as string;
   const workspaceId = useSelector(
