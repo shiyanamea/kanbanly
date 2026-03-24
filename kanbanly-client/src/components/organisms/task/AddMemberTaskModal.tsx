@@ -11,7 +11,7 @@ interface AddMemberModalProps {
 }
 
 export const AddMemberModal = ({
-  isOpen,
+  // isOpen,
   onClose,
   onInvite,
   isLoading,
